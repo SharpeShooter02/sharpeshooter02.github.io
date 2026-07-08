@@ -38,7 +38,7 @@ author:
       url: "mailto:buttnermason@gmail.com"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/sharpeshooter02"
+      url: "https://github.com/SharpeShooter02"
     # - label: "LinkedIn"    # add your LinkedIn URL here, then uncomment
     #   icon: "fab fa-fw fa-linkedin"
     #   url: "https://www.linkedin.com/in/YOUR-HANDLE"
@@ -48,7 +48,7 @@ footer:
   links:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/sharpeshooter02"
+      url: "https://github.com/SharpeShooter02"
 
 # ============================================================
 #  Defaults — turn the profile sidebar + read time on site-wide

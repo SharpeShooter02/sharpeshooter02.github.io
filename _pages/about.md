@@ -26,4 +26,4 @@ construction through the transaction-cost model and bias audit.
 ### Get in touch
 
 - Email: [buttnermason@gmail.com](mailto:buttnermason@gmail.com)
-- GitHub: [sharpeshooter02](https://github.com/sharpeshooter02)
+- GitHub: [SharpeShooter02](https://github.com/SharpeShooter02)
