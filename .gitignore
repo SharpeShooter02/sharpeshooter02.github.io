@@ -1,0 +1,12 @@
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+vendor/
+.bundle/
+Gemfile.lock
+.DS_Store
+
+# Private research figures — keep these OUT of the public site/repo.
+# They encode strategy parameters, so they are never committed or published.
+assets/images/2026-06-23-gap-orb-deep-dive/

@@ -1,0 +1,6 @@
+# Top navigation bar (the "masthead")
+main:
+  - title: "Research"
+    url: /
+  - title: "About"
+    url: /about/
