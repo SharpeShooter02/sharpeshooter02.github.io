@@ -8,7 +8,7 @@ baseurl: ""                            # leave "" for a user site (USERNAME.gith
 
 # Minimal Mistakes theme via GitHub Pages remote_theme
 remote_theme: "mmistakes/minimal-mistakes@4.26.2"
-minimal_mistakes_skin: "default"       # options: air, aqua, contrast, dark, dirt, neon, mint, plum, sunrise
+minimal_mistakes_skin: "contrast"      # options: air, aqua, contrast, dark, dirt, neon, mint, plum, sunrise
 
 # Build settings
 markdown: kramdown
@@ -18,6 +18,10 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-paginate
+
+# Build the _pages folder (Jekyll ignores underscore folders otherwise)
+include:
+  - _pages
 
 # Reading
 paginate: 5
@@ -30,7 +34,7 @@ timezone: America/New_York
 author:
   name: "Mason Buttner"                 # TODO: confirm your display name
   # avatar: "/assets/images/bio-photo.jpg"  # add a square headshot here, then uncomment
-  bio: "UW–Madison Data Science grad. I like turning messy data into clear answers."
+  bio: "UW–Madison Data Science grad. Into data, markets, rugby, and any excuse to travel."
   location: "Verona, WI"
   links:
     - label: "Email"

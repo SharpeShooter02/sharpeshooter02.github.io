@@ -45,9 +45,17 @@ show.
 
 ## Off the clock
 
-I played rugby at Madison — vice-captain of the club team and a National
-Collegiate Rugby All-Star. Team sports have honestly taught me as much about
-communication and showing up for people as any class did.
+Away from a screen, I'm usually playing sport or planning the next trip.
+
+**Rugby** is the big one — I was vice-captain of the UW–Madison club and a
+National Collegiate Rugby All-Star, and I still play whenever I can. Team sports
+have honestly taught me as much about communication and showing up for people as
+any class did. Before rugby it was **soccer**: I captained my high school varsity
+team and coached youth soccer for a summer.
+
+I also love to **travel** — new places, long routes home, and the kind of
+mishaps that make better stories later. *(More to come here — a few other things
+I'm into and whatever I'm currently tinkering with.)*
 
 ## Get in touch
 
