@@ -10,3 +10,7 @@ Gemfile.lock
 # Private research figures — keep these OUT of the public site/repo.
 # They encode strategy parameters, so they are never committed or published.
 assets/images/2026-06-23-gap-orb-deep-dive/
+
+# Raw work-sample folder (contains .Rhistory + a space in the name).
+# The curated copies live in assets/docs/ and are what get published.
+Work Samples/

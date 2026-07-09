@@ -1,0 +1,519 @@
+---
+title: "Final_Project695"
+output: html_document
+date: "2025-12-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(broom)
+library(glmnet)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(stringr)
+
+
+```
+
+
+```{r}
+
+
+# Load & clean factors 
+
+ff5_raw <- read_csv(
+  "data_raw/F-F_Research_Data_5_Factors_2x3_CSV/F-F_Research_Data_5_Factors_2x3.csv",
+  skip = 3,
+  show_col_types = FALSE
+)
+
+ff5 <- ff5_raw %>%
+  rename(ym = `...1`) %>%                  # YYYYMM code
+  mutate(ym = as.character(ym)) %>%
+  filter(str_detect(ym, "^[0-9]{6}$")) %>% # keep only data rows
+  mutate(
+    year  = as.integer(substr(ym, 1, 4)),
+    month = as.integer(substr(ym, 5, 6)),
+    date  = make_date(year, month, 1)
+  ) %>%
+  select(
+    date,
+    `Mkt-RF`, SMB, HML, RMW, CMA, RF
+  ) %>%
+  mutate(
+    across(c(`Mkt-RF`, SMB, HML, RMW, CMA, RF), ~ as.numeric(.x) / 100)
+  ) %>%
+  rename(Mkt_RF = `Mkt-RF`)     
+
+
+# Load & clean 25 portfolios#
+
+
+ff25_raw <- read_csv(
+  "data_raw/25_Portfolios_5x5_CSV/25_Portfolios_5x5.csv",
+  skip = 15,                 
+  show_col_types = FALSE
+)
+
+ff25_tmp <- ff25_raw %>%
+  rename(ym = `...1`) %>%
+  mutate(ym = as.character(ym)) %>%
+  filter(str_detect(ym, "^[0-9]{6}$")) %>%
+  mutate(
+    year  = as.integer(substr(ym, 1, 4)),
+    month = as.integer(substr(ym, 5, 6)),
+    date  = make_date(year, month, 1)
+  )
+
+portfolio_cols <- setdiff(names(ff25_tmp), c("ym", "year", "month", "date"))
+
+ff25 <- ff25_tmp %>%
+  mutate(
+    across(
+      all_of(portfolio_cols),
+      ~ {
+        x <- as.numeric(.x)
+        x[x %in% c(-99.99, -999)] <- NA_real_
+        x / 100                  # percent -> decimal
+      }
+    )
+  )
+
+
+# Merge & make excess rets #
+
+
+data_merged <- ff25 %>%
+  inner_join(ff5, by = "date")
+
+data_excess <- data_merged %>%
+  mutate(
+    across(
+      all_of(portfolio_cols),
+      ~ .x - RF,
+      .names = "{.col}_excess"
+    )
+  )
+
+excess_cols <- paste0(portfolio_cols, "_excess")
+
+data_model_wide <- data_excess %>%
+  select(
+    date,
+    all_of(excess_cols),
+    Mkt_RF, SMB, HML, RMW, CMA, RF
+  )
+
+
+# Long format + next-month target     
+
+data_model_long <- data_model_wide %>%
+  pivot_longer(
+    cols = all_of(excess_cols),
+    names_to = "portfolio",
+    values_to = "excess_return"
+  ) %>%
+  mutate(
+    portfolio = str_remove(portfolio, "_excess")
+  ) %>%
+  group_by(portfolio) %>%
+  arrange(date, .by_group = TRUE) %>%
+  mutate(
+    excess_return_next = lead(excess_return)
+  ) %>%
+  ungroup() %>%
+  drop_na(excess_return_next)
+
+
+saveRDS(data_model_wide, "data_clean/data_model_wide.rds")
+saveRDS(data_model_long, "data_clean/data_model_long.rds")
+
+```
+
+```{r}
+# unique months in order
+all_dates <- sort(unique(data_model_long$date))
+n_dates   <- length(all_dates)
+
+cut_idx   <- floor(0.8 * n_dates)
+cut_date  <- all_dates[cut_idx]
+cut_date
+# this is the last month in the training period
+
+train <- data_model_long %>% filter(date <= cut_date)
+test  <- data_model_long %>% filter(date > cut_date)
+
+length(unique(train$date))
+length(unique(test$date))
+
+```
+```{r}
+portfolio_focus <- "SMALL LoBM" 
+
+train_one <- train %>% filter(portfolio == portfolio_focus)
+test_one  <- test  %>% filter(portfolio == portfolio_focus)
+
+# baseline OLS: predict next month excess return from factors
+ols_one <- lm(
+  excess_return_next ~ Mkt_RF + SMB + HML + RMW + CMA,
+  data = train_one
+)
+
+summary(ols_one)
+
+```
+
+```{r}
+# predictions and RMSE on test
+test_one <- test_one %>%
+  mutate(
+    pred_ols = predict(ols_one, newdata = test_one),
+    sq_err   = (excess_return_next - pred_ols)^2
+  )
+
+rmse_ols_one <- sqrt(mean(test_one$sq_err, na.rm = TRUE))
+rmse_ols_one
+
+```
+```{r}
+# OLS per portfolio on training data
+ols_all <- train %>%
+  group_by(portfolio) %>%
+  do(
+    tidy(
+      lm(excess_return_next ~ Mkt_RF + SMB + HML + RMW + CMA, data = .)
+    )
+  ) %>%
+  ungroup() %>%
+  filter(term != "(Intercept)")
+
+# number of tests = portfolios * factors
+n_tests <- nrow(ols_all)
+n_tests
+
+ols_all <- ols_all %>%
+  mutate(
+    p_bonf = p.adjust(p.value, method = "bonferroni"),
+    p_fdr  = p.adjust(p.value, method = "BH")
+  )
+
+# Inspect how often each factor is significant
+sig_summary <- ols_all %>%
+  group_by(term) %>%
+  summarise(
+    n_sig_raw  = sum(p.value < 0.05),
+    n_sig_bonf = sum(p_bonf < 0.05),
+    n_sig_fdr  = sum(p_fdr < 0.05),
+    .groups = "drop"
+  )
+
+sig_summary
+
+```
+
+```{r}
+ols_all %>%
+  filter(term == "HML", p_fdr < 0.05) %>%
+  arrange(p_fdr) %>%
+  select(portfolio, estimate, p.value, p_fdr) %>%
+  head(10)
+
+```
+
+```{r}
+# predictors and response for train / test
+X_train <- train %>%
+  select(Mkt_RF, SMB, HML, RMW, CMA)
+
+y_train <- train$excess_return_next
+
+X_test <- test %>%
+  select(Mkt_RF, SMB, HML, RMW, CMA)
+
+y_test <- test$excess_return_next
+
+# glmnet needs matrices
+X_train_mat <- as.matrix(X_train)
+X_test_mat  <- as.matrix(X_test)
+
+```
+
+```{r}
+ols_pooled <- lm(
+  excess_return_next ~ Mkt_RF + SMB + HML + RMW + CMA,
+  data = train
+)
+
+# test predictions
+test <- test %>%
+  mutate(
+    pred_ols_pooled = predict(ols_pooled, newdata = test)
+  )
+
+rmse_ols_pooled <- test %>%
+  summarise(
+    rmse = sqrt(mean((excess_return_next - pred_ols_pooled)^2, na.rm = TRUE))
+  ) %>%
+  pull(rmse)
+
+rmse_ols_pooled
+
+```
+```{r}
+ols_pooled <- lm(
+  excess_return_next ~ Mkt_RF + SMB + HML + RMW + CMA,
+  data = train
+)
+
+# test predictions
+test <- test %>%
+  mutate(
+    pred_ols_pooled = predict(ols_pooled, newdata = test)
+  )
+
+rmse_ols_pooled <- test %>%
+  summarise(
+    rmse = sqrt(mean((excess_return_next - pred_ols_pooled)^2, na.rm = TRUE))
+  ) %>%
+  pull(rmse)
+
+rmse_ols_pooled
+
+```
+```{r}
+set.seed(695)
+
+cv_lasso <- cv.glmnet(
+  x = X_train_mat,
+  y = y_train,
+  alpha = 1,      # 1 = LASSO
+  nfolds = 10
+)
+
+plot(cv_lasso)
+
+lambda_min  <- cv_lasso$lambda.min   # lambda that minimizes CV error
+lambda_1se  <- cv_lasso$lambda.1se   # more regularized, sparser
+
+lambda_min
+lambda_1se
+
+# Fit final LASSO model at lambda.1se
+lasso_fit <- glmnet(
+  x = X_train_mat,
+  y = y_train,
+  alpha = 1,
+  lambda = lambda_1se
+)
+
+coef(lasso_fit)
+
+```
+
+```{r}
+test$pred_lasso <- as.numeric(predict(lasso_fit, newx = X_test_mat))
+
+rmse_lasso <- test %>%
+  summarise(
+    rmse = sqrt(mean((excess_return_next - pred_lasso)^2, na.rm = TRUE))
+  ) %>%
+  pull(rmse)
+
+rmse_lasso
+
+```
+```{r}
+focus_portfolios <- c("SMALL LoBM", "BIG HiBM")
+
+train %>%
+  filter(portfolio %in% focus_portfolios) %>%
+  group_by(portfolio) %>%
+  summarise(
+    n          = n(),
+    min_next   = min(excess_return_next, na.rm = TRUE),
+    q1_next    = quantile(excess_return_next, 0.25, na.rm = TRUE),
+    median_next= median(excess_return_next, na.rm = TRUE),
+    mean_next  = mean(excess_return_next, na.rm = TRUE),
+    q3_next    = quantile(excess_return_next, 0.75, na.rm = TRUE),
+    max_next   = max(excess_return_next, na.rm = TRUE)
+  )
+
+```
+
+```{r}
+focus_portfolios <- c("SMALL LoBM", "BIG HiBM")
+
+fig_ts_zoom <- data_model_long %>%
+  filter(portfolio %in% focus_portfolios) %>%
+  ggplot(aes(x = date, y = excess_return_next)) +
+  geom_line(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_vline(xintercept = cut_date, linetype = "dashed") +
+  facet_wrap(~ portfolio, ncol = 1) +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +   # zoom to -50% to +50%
+  labs(
+    title = "Next-Month Excess Returns Over Time (Zoomed)",
+    subtitle = "Dashed line = train/test split; y-axis trimmed for clarity",
+    x = "Date",
+    y = "Next-month excess return"
+  ) +
+  theme_minimal()
+
+fig_ts_zoom
+
+```
+
+```{r}
+focus_portfolios <- c("SMALL LoBM", "BIG HiBM")
+
+
+train %>%
+  filter(portfolio %in% focus_portfolios) %>%
+  group_by(portfolio) %>%
+  summarise(
+    n = n(),
+    share_negative = mean(excess_return_next < 0, na.rm = TRUE),
+    min_next = min(excess_return_next, na.rm = TRUE),
+    max_next = max(excess_return_next, na.rm = TRUE)
+  )
+
+
+fig_ts_trim <- data_model_long %>%
+  filter(
+    portfolio %in% focus_portfolios,
+    excess_return_next > -0.2,     
+    excess_return_next <  0.2       
+  ) %>%
+  ggplot(aes(x = date, y = excess_return_next)) +
+  geom_line(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_vline(xintercept = cut_date, linetype = "dashed") +
+  facet_wrap(~ portfolio, ncol = 1) +
+  labs(
+    title = "Next-Month Excess Returns (Trimmed to ±20%)",
+    subtitle = "Dashed line = train/test split; extreme months removed for clarity",
+    x = "Date",
+    y = "Next-month excess return"
+  ) +
+  theme_minimal()
+
+fig_ts_trim
+ggsave("fig_ts_trim_excess_returns.png", fig_ts_trim, width = 8, height = 5, dpi = 300)
+
+```
+
+
+```{r}
+portfolio_focus <- "SMALL LoBM"
+
+scatter_df <- train %>%
+  filter(portfolio == portfolio_focus) %>%
+  select(excess_return_next, Mkt_RF, SMB, HML, RMW, CMA) %>%
+  tidyr::pivot_longer(
+    cols = c(Mkt_RF, SMB, HML, RMW, CMA),
+    names_to = "factor",
+    values_to = "factor_value"
+  )
+
+fig_scatter <- scatter_df %>%
+  ggplot(aes(x = factor_value, y = excess_return_next)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.7) +
+  facet_wrap(~ factor, scales = "free_x") +
+  labs(
+    title = paste("Next-Month Excess Return vs Factors for", portfolio_focus),
+    x = "Factor value (current month)",
+    y = "Next-month excess return"
+  ) +
+  theme_minimal()
+
+fig_scatter
+
+ggsave(
+  "output/fig_scatter_small_lobm.png",
+  fig_scatter,
+  width = 8,
+  height = 4,
+  dpi = 300
+)
+
+
+```
+
+```{r}
+
+
+sig_long <- sig_summary %>%
+  tidyr::pivot_longer(
+    cols = c(n_sig_raw, n_sig_bonf, n_sig_fdr),
+    names_to = "method",
+    values_to = "count"
+  ) %>%
+  mutate(
+    method = dplyr::recode(
+      method,
+      n_sig_raw  = "Unadjusted (p < 0.05)",
+      n_sig_bonf = "Bonferroni-adjusted",
+      n_sig_fdr  = "FDR-adjusted"
+    )
+  )
+
+fig_multi <- sig_long %>%
+  ggplot(aes(x = term, y = count, fill = method)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Significant Factor Loadings Across 25 Portfolios",
+    x = "Factor",
+    y = "Count of significant coefficients",
+    fill = "Significance rule"
+  ) +
+  theme_minimal()
+
+fig_multi
+
+ggsave(
+  "output/fig_multi_testing_counts.png",
+  fig_multi,
+  width = 7,
+  height = 4,
+  dpi = 300
+)
+
+```
+
+
+
+```{r}
+
+
+fig_coef <- ols_all %>%
+  ggplot(aes(x = term, y = estimate)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(
+    title = "Distribution of Factor Loadings Across Portfolios",
+    x = "Factor",
+    y = "Estimated coefficient"
+  ) +
+  theme_minimal()
+
+fig_coef
+
+ggsave(
+  "output/fig_coef_boxplot.png",
+  fig_coef,
+  width = 7,
+  height = 4,
+  dpi = 300
+)
+
+```
+
+
+
+
+

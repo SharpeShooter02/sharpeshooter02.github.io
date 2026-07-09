@@ -2,7 +2,7 @@
 #  Site settings
 # ============================================================
 title: "Mason Buttner"                 # TODO: confirm name
-description: "Quantitative trading research — systematic strategies, backtesting, and market microstructure."
+description: "Data Science grad from UW–Madison. Statistical modeling, data analysis, and a couple of finance projects I fell down a rabbit hole on."
 url: "https://sharpeshooter02.github.io"
 baseurl: ""                            # leave "" for a user site (USERNAME.github.io); set "/REPO" for a project site
 
@@ -30,8 +30,8 @@ timezone: America/New_York
 author:
   name: "Mason Buttner"                 # TODO: confirm your display name
   # avatar: "/assets/images/bio-photo.jpg"  # add a square headshot here, then uncomment
-  bio: "Quantitative trading research and systematic strategy design."  # TODO: refine your 1-2 sentence bio
-  location: "United States"             # TODO: optional
+  bio: "UW–Madison Data Science grad. I like turning messy data into clear answers."
+  location: "Verona, WI"
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
@@ -39,9 +39,9 @@ author:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/SharpeShooter02"
-    # - label: "LinkedIn"    # add your LinkedIn URL here, then uncomment
-    #   icon: "fab fa-fw fa-linkedin"
-    #   url: "https://www.linkedin.com/in/YOUR-HANDLE"
+    - label: "LinkedIn"
+      icon: "fab fa-fw fa-linkedin"
+      url: "https://www.linkedin.com/in/mason-buttner"
 
 # Footer links (optional, mirror the above)
 footer:

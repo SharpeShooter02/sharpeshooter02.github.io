@@ -2,6 +2,7 @@
 layout: single
 title: "Overnight Gaps and the 30-Minute ORB: An Intraday Mean-Reversion Study in Leveraged ETFs"
 date: 2026-06-23
+permalink: /research/gap-orb-mean-reversion/
 categories: [trading, research]
 tags: [orb, gap-trading, leveraged-etfs, mean-reversion, backtesting]
 excerpt: "A study of how overnight gaps and opening-range behavior in leveraged ETFs combine into a systematic intraday mean-reversion signal — and which indicators carry the edge."
