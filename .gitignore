@@ -14,3 +14,6 @@ assets/images/2026-06-23-gap-orb-deep-dive/
 # Raw work-sample folder (contains .Rhistory + a space in the name).
 # The curated copies live in assets/docs/ and are what get published.
 Work Samples/
+
+# Congress ELO leaderboard — its own separate repo, not part of this site.
+outputs/

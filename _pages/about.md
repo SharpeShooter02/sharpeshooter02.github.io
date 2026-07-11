@@ -37,6 +37,10 @@ show.
 - **[Fama–French Factor Analysis](/projects/fama-french-factor-analysis/)** — a
   class project using multiple-testing corrections and cross-validated LASSO to
   ask whether standard equity risk factors predict next-month returns.
+- **[Congressional Trading ELO](/projects/congressional-trading-elo/)** — a
+  self-updating leaderboard that scores members of Congress' disclosed stock
+  trades as head-to-head matches against the S&P 500, built with Python and
+  GitHub Actions.
 
 ## Education
 
