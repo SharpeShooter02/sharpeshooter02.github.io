@@ -33,7 +33,7 @@ timezone: America/New_York
 # ============================================================
 author:
   name: "Mason Buttner"                 # TODO: confirm your display name
-  # avatar: "/assets/images/bio-photo.jpg"  # add a square headshot here, then uncomment
+  avatar: "/assets/images/bio-photo.jpg"
   bio: "UW–Madison Data Science grad. Into data, markets, rugby, and any excuse to travel."
   location: "Verona, WI"
   links:
