@@ -19,9 +19,7 @@ far. I got interested in markets, so I built a backtesting setup to check whethe
 a trading idea actually held up once you accounted for costs and stopped fooling
 yourself with look-ahead bias. Then, for a class project, I dug into whether the
 famous Fama–French factors actually predict anything month to month (short
-answer: not really). I'm not a Wall Street quant — I'm a new grad who finds this
-stuff genuinely fun and tries to be honest about what the data does and doesn't
-show.
+answer: not really). I have a budding interest in algorithmic trading and financial analytics that I would like to continue in a proffesional space.
 
 ## What I work with
 

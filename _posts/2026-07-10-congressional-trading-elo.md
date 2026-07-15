@@ -25,15 +25,19 @@ rating** based on how their trades actually performed relative to the index.
 
 A Python builder (`build_leaderboard.py`) does the whole pipeline:
 
-1. Pulls disclosed House and Senate trades from the free **Stock Watcher**
-   datasets — no paid API keys.
-2. Fetches end-of-day prices for each ticker and the S&P 500 via **yfinance**.
-3. Scores each trade's return over a 30-trading-day window against the S&P — the
-   trade's *excess return*.
-4. Replays a **market-anchored ELO** in chronological order, with the S&P fixed
-   at 1500, so a rating above 1500 means a member's trades have beaten the market
-   on a risk-of-being-wrong-adjusted basis.
-5. Writes the data the front end reads, and a static HTML board renders it with
+1. Pulls disclosed House, Senate, and executive-branch trades — current and
+   former officials — from the free, daily-updated **Congress Trading Monitor**
+   open dataset (itself aggregated from the House Clerk, Senate eFD, and OGE
+   filings), no paid API keys.
+2. Scores each trade on a **time-decayed excess return versus the S&P 500**: an
+   edge that shows up within weeks counts fully, one that takes a year counts
+   less, and one that only appears after years counts least (but never zero). The
+   idea is that trading on non-public information reveals itself as being right
+   *fast* — so well-timed trades rise, and lucky buy-and-holds don't dominate.
+3. Replays a **market-anchored ELO** across every filer's full trade history in
+   chronological order, with the market fixed at 1500, so a rating above 1500
+   means a member's trades have consistently beaten the market on timing.
+4. Writes the data the front end reads, and a static HTML board renders it with
    sortable, filterable rankings.
 
 ## Staying current, for free
@@ -43,8 +47,7 @@ rebuilds the data every weekday and commits it back to the repo, so the board
 stays fresh without a server, a database, or paid infrastructure — it's a static
 site that quietly updates itself.
 
-**Tools:** Python (pandas, yfinance, requests), GitHub Actions, vanilla
-HTML/CSS/JS.
+**Tools:** Python (requests), GitHub Actions, vanilla HTML/CSS/JS.
 
 *Methodology note: disclosures report trade sizes only as ranges, so trades are
 equal-weighted by default; ratings reflect timing and direction versus the index,
