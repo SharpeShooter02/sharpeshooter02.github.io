@@ -34,8 +34,7 @@ using their insider knowledge of the markets to their advantage.
 
 - **[Overnight Gaps and the 30-Minute ORB](/research/gap-orb-momentum-continuation/)**:
   a study of whether leveraged ETFs keep running in the direction of a big
-  overnight gap, built with realistic transaction costs and a focus on
-  avoiding look-ahead bias.
+  overnight gaps.
 - **[Fama–French Factor Analysis](/projects/fama-french-factor-analysis/)**: a
   class project using multiple-testing corrections and cross-validated LASSO
   to test whether standard equity risk factors predict next-month returns.
