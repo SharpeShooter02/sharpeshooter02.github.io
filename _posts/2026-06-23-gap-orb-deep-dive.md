@@ -91,7 +91,7 @@ because the ETFs themselves mean-revert.
 A few principles that the study treats as non-negotiable, since they're what
 separate a real edge from a backtest artifact:
 
-- **Causal / look-ahead-free.** Every input is computed from information available at decision time. This was a reocurring oversite when I was first brainstorming the strategy.
+- **Causal / look-ahead-free.** Every input is computed from information available at decision time. This was a recurring oversight when I was first brainstorming the strategy.
 - **Discovery vs validation.** Findings are established on one period and then
   checked, unchanged, on a separate later period.
 - **Realistic costs.** Commissions, bid-ask spreads, and market-impact are
